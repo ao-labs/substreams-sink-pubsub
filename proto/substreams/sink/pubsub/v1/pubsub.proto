@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1;pbpubsub";
+
+message PubSubOperations {
+  repeated PubSubOperation operations = 1;
+}
+
+message PubSubOperation {
+  string key = 1;
+  bytes value = 2;
+  uint64 ordinal = 3;
+  enum Type {
+    UNSET = 0;    // Protobuf default should not be used, this is used so that the consume can ensure that the value was actually specified
+    SET = 1;
+    DELETE = 2;
+  }
+  Type type = 4;
+}
