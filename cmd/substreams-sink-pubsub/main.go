@@ -8,10 +8,10 @@ import (
 var version = "dev"
 
 func main() {
-	cli.Run("substreams-sink-kv", "Substreams KV sink",
+	cli.Run("substreams-sink-pubsub", "Substreams PubSub sink",
 		sinkCmd,
 
-		cli.ConfigureViper("PUBNUB_SINK"),
+		cli.ConfigureViper("PUBSUB_SINK"),
 		cli.ConfigureVersion(version),
 
 		cli.PersistentFlags(func(flags *pflag.FlagSet) {
