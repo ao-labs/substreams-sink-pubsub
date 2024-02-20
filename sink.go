@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
-	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 	"os"
 	"time"
 
@@ -13,6 +11,8 @@ import (
 	"github.com/streamingfast/logging"
 	"github.com/streamingfast/shutter"
 	sink "github.com/streamingfast/substreams-sink"
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/proto/substreams/sink/pubsub/v1"
+	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 	"go.uber.org/zap"
 )
 
@@ -66,9 +66,7 @@ func (s *Sink) onTerminating(ctx context.Context, err error) {
 	panic("implement me")
 }
 
-// TODO: BATCH IT DYNAMICALLY Depending on isLive (Big batch size when not live, small when it is)
 func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
-
 	publishOperations := &pbpubsub.PublishOperations{}
 
 	err := data.Output.MapOutput.UnmarshalTo(publishOperations)
@@ -76,7 +74,7 @@ func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.
 		return fmt.Errorf("unmarshalling output: %w", err)
 	}
 
-	err = s.handlePublishOperations(ctx, publishOperations)
+	err = s.handlePublishOperations(ctx, publishOperations, data.Clock.Number)
 	if err != nil {
 		return fmt.Errorf("handling publish operations: %w", err)
 	}
@@ -128,19 +126,27 @@ func (s *Sink) saveCursor(cursor *sink.Cursor) error {
 	return nil
 }
 
-func (s *Sink) handlePublishOperations(ctx context.Context, publishOperations *pbpubsub.PublishOperations) error {
+func (s *Sink) handlePublishOperations(ctx context.Context, publishOperations *pbpubsub.PublishOperations, blockNum uint64) error {
 	var results []*pubsub.PublishResult
 
 	for _, operation := range publishOperations.PublishOperations {
 		if t, ok := s.topics[operation.TopicID]; ok {
-			result := t.Publish(ctx, &pubsub.Message{Data: operation.Message.Data})
+
+			msg := &pubsub.Message{
+				Data:        operation.Message.Data,
+				OrderingKey: fmt.Sprintf("%d", blockNum),
+			}
+			if operation.OrderingKey != "" {
+				msg.OrderingKey = operation.OrderingKey
+			}
+
+			result := t.Publish(ctx, msg)
 			s.logger.Info("publishing message", zap.String("topic_id", operation.TopicID), zap.String("message", string(operation.Message.Data)))
 			results = append(results, result)
 			continue
 		}
 
 		return fmt.Errorf("topic %s not found", operation.TopicID)
-
 	}
 
 	var resultErrors []error

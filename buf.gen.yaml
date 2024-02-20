@@ -1,8 +1,9 @@
 version: v1
 managed:
   enabled: true
-
+  go_package_prefix:
+    default: github.com/streamingfast/substreams-sink-pubsub/pb
 plugins:
   - name: go
-    out: ./pb
+    out: ../pb
     opt: paths=source_relative

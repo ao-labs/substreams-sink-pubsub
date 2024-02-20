@@ -1,20 +1,23 @@
 package substreams_sink_pubsub
 
 import (
-	"cloud.google.com/go/pubsub"
-	"cloud.google.com/go/pubsub/pstest"
 	"context"
 	"fmt"
+	"sort"
+	"sync"
+	"testing"
+	"time"
+
+	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/pstest"
 	"github.com/streamingfast/logging"
 	"github.com/streamingfast/shutter"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/proto/substreams/sink/pubsub/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"testing"
-	"time"
 )
 
 var logger, _ = logging.ApplicationLogger("test", "test")
@@ -42,20 +45,22 @@ func TestHandlePublishOperations(t *testing.T) {
 			operations: &pbpubsub.PublishOperations{
 				PublishOperations: []*pbpubsub.PublishOperation{
 					{
-						TopicID: "topic",
+						TopicID:     "topic",
+						OrderingKey: "key.2",
 						Message: &pbpubsub.Message{
-							Data: []byte("data"),
+							Data: []byte("data.99"),
 						},
 					},
 					{
-						TopicID: "topic",
+						TopicID:     "topic",
+						OrderingKey: "key.1",
 						Message: &pbpubsub.Message{
-							Data: []byte("fiouu"),
+							Data: []byte("data.1"),
 						},
 					},
 				},
 			},
-			expectedResults: []string{"data", "fiouu"},
+			expectedResults: []string{"data.99", "data.1"},
 		},
 	}
 
@@ -71,6 +76,7 @@ func TestHandlePublishOperations(t *testing.T) {
 			if err != nil {
 				require.NoError(t, err)
 			}
+			topic.EnableMessageOrdering = true
 
 			topics := make(map[string]*pubsub.Topic)
 			topics["topic"] = topic
@@ -85,26 +91,30 @@ func TestHandlePublishOperations(t *testing.T) {
 			}
 
 			subscription, err := client.CreateSubscription(ctx, "sub", pubsub.SubscriptionConfig{
-				Topic:              topic,
-				PushConfig:         pubsub.PushConfig{},
-				BigQueryConfig:     pubsub.BigQueryConfig{},
-				CloudStorageConfig: pubsub.CloudStorageConfig{},
-				AckDeadline:        0,
+				Topic:                 topic,
+				AckDeadline:           10 * time.Second,
+				EnableMessageOrdering: true,
 			})
 			if err != nil {
 				require.NoError(t, err)
 			}
 
-			results := []string{}
+			expectedResultCount := len(c.expectedResults)
+			var results []string
+			var lock sync.Mutex
 			done := make(chan interface{})
 
 			go func() {
 				err = subscription.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+					lock.Lock()
 					results = append(results, string(m.Data))
-					m.Ack()
-					if len(results) == len(c.expectedResults) {
+					if len(results) == expectedResultCount {
+						fmt.Println("Closing done channel")
 						close(done)
+						fmt.Println("channel closed")
 					}
+					m.Ack()
+					lock.Unlock()
 				})
 				if err != nil {
 					if s, ok := status.FromError(err); ok {
@@ -116,29 +126,22 @@ func TestHandlePublishOperations(t *testing.T) {
 					fmt.Printf("Error: %T\n", err)
 					require.NoError(t, err)
 				}
-
 			}()
 
-			err = sink.handlePublishOperations(ctx, c.operations)
-			if err != nil {
-				require.NoError(t, err)
-			}
+			err = sink.handlePublishOperations(ctx, c.operations, 1)
+			require.NoError(t, err)
 
 			expire := time.After(1 * time.Second)
-
 			select {
 			case <-done:
 			case <-expire:
-				t.Fatal(fmt.Sprintf("expected %d messages, got %d", len(c.expectedResults), len(results)))
+				t.Fatal(fmt.Sprintf("Timeout: expected %d messages, got %d", len(c.expectedResults), len(results)))
 			}
 
-			for _, res := range results {
-				fmt.Println("Result ", res)
-			}
+			sort.Strings(results)
+			sort.Strings(c.expectedResults)
 
-			require.NoError(t, err)
+			require.Equal(t, c.expectedResults, results)
 		})
-
 	}
-
 }

@@ -12,7 +12,6 @@ require (
 	github.com/streamingfast/substreams v1.3.0
 	github.com/streamingfast/substreams-sink v0.3.3
 	github.com/stretchr/testify v1.8.4
-	go.etcd.io/etcd/api/v3 v3.5.6
 	go.uber.org/zap v1.26.0
 	google.golang.org/api v0.160.0
 	google.golang.org/grpc v1.61.0

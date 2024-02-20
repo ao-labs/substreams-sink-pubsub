@@ -8,7 +8,10 @@ message PublishOperations {
 
 message PublishOperation {
   string topicID = 1;
-  Message message = 2;
+  // OrderingKey identifies related messages for which publish order should
+  // be respected. If empty string is used, message will be sent unordered.
+  string orderingKey = 2;
+  Message message = 3;
 }
 
 //TODO: Update bytes to AnyProto
