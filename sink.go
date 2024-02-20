@@ -11,7 +11,7 @@ import (
 	"github.com/streamingfast/logging"
 	"github.com/streamingfast/shutter"
 	sink "github.com/streamingfast/substreams-sink"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/proto/substreams/sink/pubsub/v1"
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 	"go.uber.org/zap"
 )
@@ -141,7 +141,6 @@ func (s *Sink) handlePublishOperations(ctx context.Context, publishOperations *p
 			}
 
 			result := t.Publish(ctx, msg)
-			s.logger.Info("publishing message", zap.String("topic_id", operation.TopicID), zap.String("message", string(operation.Message.Data)))
 			results = append(results, result)
 			continue
 		}

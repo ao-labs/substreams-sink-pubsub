@@ -12,7 +12,7 @@ import (
 	"cloud.google.com/go/pubsub/pstest"
 	"github.com/streamingfast/logging"
 	"github.com/streamingfast/shutter"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/proto/substreams/sink/pubsub/v1"
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"

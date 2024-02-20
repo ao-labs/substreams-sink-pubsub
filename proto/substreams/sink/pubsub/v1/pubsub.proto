@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option go_package = "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1;pbpubsub";
 
+import "google/protobuf/any.proto";
+
 message PublishOperations {
   repeated PublishOperation publishOperations = 1;
 }
@@ -17,7 +19,7 @@ message PublishOperation {
 //TODO: Update bytes to AnyProto
 
 message Message {
-  bytes  data = 1;
+  bytes data = 1;
   repeated Attribute attributes = 2;
 
 }
