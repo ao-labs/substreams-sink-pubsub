@@ -290,6 +290,5 @@ func TestGenerateBlockMessages(t *testing.T) {
 
 	results := generateBlockMessages(publish, cursor, blockNumber)
 
-	fmt.Println(results[0], expectedResults[0])
 	require.Equal(t, expectedResults, results)
 }
