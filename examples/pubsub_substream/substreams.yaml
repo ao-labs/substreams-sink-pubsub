@@ -21,6 +21,6 @@ modules:
     inputs:
       - source: sf.substreams.v1.Clock
     output:
-      type: proto:pubsub.v1.PublishOperations
+      type: proto:pubsub.v1.Publish
 
 

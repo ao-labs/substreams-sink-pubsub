@@ -44,12 +44,9 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	topic := client.Topic(topicName)
 	topic.EnableMessageOrdering = true
 
-	mapTopics := make(map[string]*pubsub.Topic)
-	mapTopics[topicName] = topic
-
 	sinker, err := sink.NewFromViper(
 		cmd,
-		"pubsub.v1.PublishOperations",
+		"pubsub.v1.Publish",
 		endpoint, manifestPath, module, blockRange,
 		zlog, tracer,
 	)
@@ -57,7 +54,7 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to setup sinker: %w", err)
 	}
 
-	s := spubsub.NewSink(sinker, zlog, tracer, cursorPath, client, mapTopics)
+	s := spubsub.NewSink(sinker, zlog, cursorPath, client, topic)
 
 	s.OnTerminating(func(err error) {
 		if err != nil {

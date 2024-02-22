@@ -31,13 +31,14 @@ type Message struct {
 	OrderingKey string
 }
 
-func NewSink(sinker *sink.Sinker, logger *zap.Logger, cursorPath string, client *pubsub.Client) *Sink {
+func NewSink(sinker *sink.Sinker, logger *zap.Logger, cursorPath string, client *pubsub.Client, topic *pubsub.Topic) *Sink {
 	s := &Sink{
 		Shutter:    shutter.New(),
 		Sinker:     sinker,
 		logger:     logger,
 		client:     client,
 		cursorPath: cursorPath,
+		topic:      topic,
 	}
 
 	s.OnTerminating(func(err error) {
