@@ -1,0 +1,26 @@
+specVersion: v0.1.0
+package:
+  name: pubsub_substream
+  version: v0.1.0
+
+protobuf:
+  files:
+    - substreams/sink/pubsub/v1/pubsub.proto
+  importPaths:
+    - ../../proto/
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/substreams.wasm
+
+modules:
+  - name: map_clocks
+    kind: map
+    initialBlock: 0
+    inputs:
+      - source: sf.substreams.v1.Clock
+    output:
+      type: proto:pubsub.v1.PublishOperations
+
+

@@ -1,27 +1,18 @@
 syntax = "proto3";
 
+package pubsub.v1;
+
 option go_package = "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1;pbpubsub";
 
-import "google/protobuf/any.proto";
 
-message PublishOperations {
-  repeated PublishOperation publishOperations = 1;
+message Publish{
+  repeated Message messages = 1;
 }
 
-message PublishOperation {
-  string topicID = 1;
-  // OrderingKey identifies related messages for which publish order should
-  // be respected. If empty string is used, message will be sent unordered.
-  string orderingKey = 2;
-  Message message = 3;
-}
-
-//TODO: Update bytes to AnyProto
 
 message Message {
   bytes data = 1;
   repeated Attribute attributes = 2;
-
 }
 
 message Attribute {

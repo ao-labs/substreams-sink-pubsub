@@ -2,13 +2,13 @@ package substreams_sink_pubsub
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/streamingfast/logging"
 	"github.com/streamingfast/shutter"
 	sink "github.com/streamingfast/substreams-sink"
 	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
@@ -21,15 +21,23 @@ type Sink struct {
 	*sink.Sinker
 	logger     *zap.Logger
 	client     *pubsub.Client
-	topics     map[string]*pubsub.Topic
+	topic      *pubsub.Topic
 	cursorPath string
 }
 
-func NewSink(sinker *sink.Sinker, logger *zap.Logger, tracer logging.Tracer) *Sink {
+type Message struct {
+	Data        []byte
+	Attributes  map[string]string
+	OrderingKey string
+}
+
+func NewSink(sinker *sink.Sinker, logger *zap.Logger, cursorPath string, client *pubsub.Client) *Sink {
 	s := &Sink{
-		Shutter: shutter.New(),
-		Sinker:  sinker,
-		logger:  logger,
+		Shutter:    shutter.New(),
+		Sinker:     sinker,
+		logger:     logger,
+		client:     client,
+		cursorPath: cursorPath,
 	}
 
 	s.OnTerminating(func(err error) {
@@ -41,7 +49,6 @@ func NewSink(sinker *sink.Sinker, logger *zap.Logger, tracer logging.Tracer) *Si
 }
 
 func (s *Sink) Run(ctx context.Context) {
-	s.logger.Info("starting PubSub sink")
 	s.Sinker.OnTerminating(s.Shutdown)
 	s.OnTerminating(func(err error) {
 		s.logger.Info("terminating")
@@ -58,26 +65,26 @@ func (s *Sink) Run(ctx context.Context) {
 }
 
 func (s *Sink) onTerminating(ctx context.Context, err error) {
-	//if s.lastCursor == nil || err != nil {
-	//	return
-	//}
-	//
-	//_ = s.operationDB.WriteCursor(ctx, s.lastCursor)
-	panic("implement me")
+	s.logger.Error("terminating", zap.Error(err))
 }
 
 func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
-	publishOperations := &pbpubsub.PublishOperations{}
 
-	err := data.Output.MapOutput.UnmarshalTo(publishOperations)
+	publish := &pbpubsub.Publish{}
+
+	err := data.Output.MapOutput.UnmarshalTo(publish)
 	if err != nil {
 		return fmt.Errorf("unmarshalling output: %w", err)
 	}
 
-	err = s.handlePublishOperations(ctx, publishOperations, data.Clock.Number)
+	blockNum := data.Clock.Number
+	messages := generateBlockMessages(publish, cursor, blockNum)
+
+	err = s.publishMessages(ctx, messages)
 	if err != nil {
-		return fmt.Errorf("handling publish operations: %w", err)
+		return fmt.Errorf("publishing messages: %w", err)
 	}
+
 	err = s.saveCursor(cursor)
 	if err != nil {
 		return fmt.Errorf("saving cursor: %w", err)
@@ -86,39 +93,87 @@ func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.
 	return nil
 }
 
+func generateBlockMessages(publish *pbpubsub.Publish, cursor *sink.Cursor, blockNum uint64) []*pubsub.Message {
+	var messages []*pubsub.Message
+	var indexCounter int
+	for _, message := range publish.Messages {
+		attributes := make(map[string]string)
+		for _, attribute := range message.Attributes {
+			attributes[attribute.Key] = attribute.Value
+		}
+
+		attributes["Cursor"] = cursor.String()
+
+		msg := &pubsub.Message{
+			Data:        message.Data,
+			Attributes:  attributes,
+			OrderingKey: fmt.Sprintf("%09d_%05d", blockNum, indexCounter),
+		}
+
+		messages = append(messages, msg)
+		indexCounter++
+	}
+
+	return messages
+}
+
 func (s *Sink) handleBlockUndoSignal(ctx context.Context, data *pbsubstreamsrpc.BlockUndoSignal, cursor *sink.Cursor) error {
-	panic("implement me")
+	lastValidBlockNum := data.LastValidBlock.Number
+
+	messages := []*pubsub.Message{
+		{
+			Data:       []byte(""),
+			Attributes: map[string]string{"LastValidBlock": strconv.FormatUint(lastValidBlockNum, 10), "Step": "Undo", "Cursor": cursor.String()},
+		},
+	}
+
+	err := s.publishMessages(ctx, messages)
+	if err != nil {
+		return fmt.Errorf("publishing messages: %w", err)
+	}
+
+	err = s.saveCursor(cursor)
+	if err != nil {
+		return fmt.Errorf("saving cursor: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Sink) loadCursor() (*sink.Cursor, error) {
-	_, err := os.Stat(s.cursorPath)
+	fpath := filepath.Join(s.cursorPath, "cursor.json")
+
+	_, err := os.Stat(fpath)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
 
-	cursorData, err := os.ReadFile(s.cursorPath)
+	cursorData, err := os.ReadFile(fpath)
 
 	if err != nil {
 		return nil, fmt.Errorf("reading cursor file: %w", err)
 	}
 
-	cursor := &sink.Cursor{}
-	err = json.Unmarshal(cursorData, cursor)
+	cursorString := string(cursorData)
+	cursor, err := sink.NewCursor(cursorString)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling cursor: %w", err)
+		return nil, fmt.Errorf("parsing cursor: %w", err)
 	}
 
 	return cursor, nil
 }
 
-func (s *Sink) saveCursor(cursor *sink.Cursor) error {
+func (s *Sink) saveCursor(c *sink.Cursor) error {
+	cursorString := c.String()
 
-	cursorBytes, err := json.Marshal(cursor)
+	err := os.MkdirAll(s.cursorPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("marshalling cursor: %w", err)
+		return fmt.Errorf("making state store path: %w", err)
 	}
 
-	err = os.WriteFile(s.cursorPath, cursorBytes, 0644)
+	fpath := filepath.Join(s.cursorPath, "cursor.json")
+
+	err = os.WriteFile(fpath, []byte(cursorString), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("writing cursor file: %w", err)
 	}
@@ -126,26 +181,12 @@ func (s *Sink) saveCursor(cursor *sink.Cursor) error {
 	return nil
 }
 
-func (s *Sink) handlePublishOperations(ctx context.Context, publishOperations *pbpubsub.PublishOperations, blockNum uint64) error {
+func (s *Sink) publishMessages(ctx context.Context, messages []*pubsub.Message) error {
 	var results []*pubsub.PublishResult
 
-	for _, operation := range publishOperations.PublishOperations {
-		if t, ok := s.topics[operation.TopicID]; ok {
-
-			msg := &pubsub.Message{
-				Data:        operation.Message.Data,
-				OrderingKey: fmt.Sprintf("%d", blockNum),
-			}
-			if operation.OrderingKey != "" {
-				msg.OrderingKey = operation.OrderingKey
-			}
-
-			result := t.Publish(ctx, msg)
-			results = append(results, result)
-			continue
-		}
-
-		return fmt.Errorf("topic %s not found", operation.TopicID)
+	for _, message := range messages {
+		result := s.topic.Publish(ctx, message)
+		results = append(results, result)
 	}
 
 	var resultErrors []error
