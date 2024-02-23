@@ -50,13 +50,11 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	app := shutter.New()
 	ctx := cmd.Context()
 
-	fmt.Printf("args: %v\n", args)
 	module, manifestPath, blockRange := extractInjectArgs(cmd, args)
 	endpoint := sflags.MustGetString(cmd, "endpoint")
 	cursorPath := sflags.MustGetString(cmd, "cursor_path")
 	project := sflags.MustGetStringSlice(cmd, "project")
 
-	fmt.Println("project: ", project)
 	projectID := project[0]
 	topicName := project[1]
 
