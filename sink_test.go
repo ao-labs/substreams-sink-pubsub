@@ -159,6 +159,21 @@ func TestPublishMessages(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "undo message",
+			messages: []*pubsub.Message{
+				{
+					Data:       nil,
+					Attributes: map[string]string{"LastValidBlock": "4", "Step": "Undo", "Cursor": "1"},
+				},
+			},
+			expectedResults: []resultMessage{
+				{
+					data:       "",
+					attributes: map[string]string{"LastValidBlock": "4", "Step": "Undo", "Cursor": "1"},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -234,7 +249,7 @@ func TestPublishMessages(t *testing.T) {
 				t.Fatal(fmt.Sprintf("Timeout: no message received"))
 			}
 
-			//TODO: Results should not be sorted, pstest do not support ordering
+			//pstest doesn't support message ordering
 			sort.Slice(results, func(i, j int) bool {
 				return results[i].orderingKey < results[j].orderingKey
 			})
@@ -244,7 +259,7 @@ func TestPublishMessages(t *testing.T) {
 	}
 }
 
-func TestGenerateBlockMessages(t *testing.T) {
+func TestGenerateBlockScopedMessages(t *testing.T) {
 
 	cursor := &sink.Cursor{
 		Cursor: &bstream.Cursor{
@@ -288,7 +303,36 @@ func TestGenerateBlockMessages(t *testing.T) {
 		},
 	}
 
-	results := generateBlockMessages(publish, cursor, blockNumber)
+	results := generateBlockScopedMessages(publish, cursor, blockNumber)
+
+	require.Equal(t, expectedResults, results)
+}
+
+func TestGenerateUndoBlockMessages(t *testing.T) {
+
+	cursor := &sink.Cursor{
+		Cursor: &bstream.Cursor{
+			Step:      1,
+			Block:     bstream.NewBlockRefFromID("3"),
+			LIB:       bstream.NewBlockRefFromID("2"),
+			HeadBlock: bstream.NewBlockRefFromID("4"),
+		},
+	}
+
+	LastValidBlockNumber := uint64(4)
+
+	expectedResults := []*pubsub.Message{
+		{
+			Data: nil,
+			Attributes: map[string]string{
+				"Cursor":         "e_jb3d3LppwOzpSs-jtHy6WyLpcyBlBsXwvvLhtBj4k=",
+				"LastValidBlock": "4",
+				"Step":           "Undo",
+			},
+		},
+	}
+
+	results := generateUndoBlockMessages(LastValidBlockNumber, cursor)
 
 	require.Equal(t, expectedResults, results)
 }

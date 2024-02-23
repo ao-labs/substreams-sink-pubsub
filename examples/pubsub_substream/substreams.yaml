@@ -6,8 +6,10 @@ package:
 protobuf:
   files:
     - substreams/sink/pubsub/v1/pubsub.proto
+    - substreams/sink/pubsub/v1/service.proto
   importPaths:
     - ../../proto/
+
 
 binaries:
   default:
@@ -21,6 +23,7 @@ modules:
     inputs:
       - source: sf.substreams.v1.Clock
     output:
-      type: proto:pubsub.v1.Publish
+      type: proto:sf.substreams.sink.pubsub.v1.Publish
+
 
 

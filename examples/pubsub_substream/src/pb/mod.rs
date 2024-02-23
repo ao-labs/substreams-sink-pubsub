@@ -1,8 +1,14 @@
 // @generated
-pub mod pubsub {
-    // @@protoc_insertion_point(attribute:pubsub.v1)
-    pub mod v1 {
-        include!("pubsub.v1.rs");
-        // @@protoc_insertion_point(pubsub.v1)
+pub mod sf {
+    pub mod substreams {
+        pub mod sink {
+            pub mod pubsub {
+                // @@protoc_insertion_point(attribute:sf.substreams.sink.pubsub.v1)
+                pub mod v1 {
+                    include!("sf.substreams.sink.pubsub.v1.rs");
+                    // @@protoc_insertion_point(sf.substreams.sink.pubsub.v1)
+                }
+            }
+        }
     }
 }

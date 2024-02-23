@@ -79,7 +79,7 @@ func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.
 	}
 
 	blockNum := data.Clock.Number
-	messages := generateBlockMessages(publish, cursor, blockNum)
+	messages := generateBlockScopedMessages(publish, cursor, blockNum)
 
 	err = s.publishMessages(ctx, messages)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.
 	return nil
 }
 
-func generateBlockMessages(publish *pbpubsub.Publish, cursor *sink.Cursor, blockNum uint64) []*pubsub.Message {
+func generateBlockScopedMessages(publish *pbpubsub.Publish, cursor *sink.Cursor, blockNum uint64) []*pubsub.Message {
 	var messages []*pubsub.Message
 	var indexCounter int
 	for _, message := range publish.Messages {
@@ -121,12 +121,7 @@ func generateBlockMessages(publish *pbpubsub.Publish, cursor *sink.Cursor, block
 func (s *Sink) handleBlockUndoSignal(ctx context.Context, data *pbsubstreamsrpc.BlockUndoSignal, cursor *sink.Cursor) error {
 	lastValidBlockNum := data.LastValidBlock.Number
 
-	messages := []*pubsub.Message{
-		{
-			Data:       []byte(""),
-			Attributes: map[string]string{"LastValidBlock": strconv.FormatUint(lastValidBlockNum, 10), "Step": "Undo", "Cursor": cursor.String()},
-		},
-	}
+	messages := generateUndoBlockMessages(lastValidBlockNum, cursor)
 
 	err := s.publishMessages(ctx, messages)
 	if err != nil {
@@ -204,6 +199,21 @@ func (s *Sink) publishMessages(ctx context.Context, messages []*pubsub.Message) 
 	}
 
 	return nil
+}
+func generateUndoBlockMessages(lastValidBlockNum uint64, cursor *sink.Cursor) []*pubsub.Message {
+	attributes := make(map[string]string)
+	attributes["LastValidBlock"] = strconv.FormatUint(lastValidBlockNum, 10)
+	attributes["Step"] = "Undo"
+	attributes["Cursor"] = cursor.String()
+
+	msg := &pubsub.Message{
+		Data:       nil,
+		Attributes: attributes,
+	}
+
+	messages := []*pubsub.Message{msg}
+
+	return messages
 }
 
 //TODO: Configure retry
