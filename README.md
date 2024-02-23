@@ -36,7 +36,7 @@ Run the sink providing the `substreams manifest` and the substreams `module name
 using the following command:
 
 ```bash 
-substreams-sink-pubsub sink <endpoint> <projectId> <topicName> <substreams_module_name> <substreams_manifest> 
+substreams-sink-pubsub sink -e <endpoint> <substreams_module_name> <substreams_manifest> --project <projectId>,<topicName> 
 ```
 
 **Note:** *--help flag can be used to get more information on the flags used in the sink command.*
@@ -48,7 +48,7 @@ As an example, let's sink the ethereum blockchain data from the `pubsub_substrea
 Run the following command, to publish the data on the PubSub topic `myTopic` associated with the Google cloud project-id `myProjectId`:
 
 ```bash
-substreams-sink-pubsub sink mainnet.eth.streamingfast.io:443 myProjectId myTopic map_clocks ./examples/pubsub_substream/manifest.yaml
+substreams-sink-pubsub sink -e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml --project "1","topic"
 ```
 
 

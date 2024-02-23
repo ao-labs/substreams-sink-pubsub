@@ -13,12 +13,14 @@ import (
 )
 
 var sinkCmd = Command(sinkRunE,
-	"sink <endpoint> <projectId> <topicName> <moduleName> [<manifest-path>] [<block-range>]",
+	"sink <endpoint> <moduleName> [<manifest-path>] [<block-range>]",
 	"Substreams Pubsub sinking",
 	Flags(func(flags *pflag.FlagSet) {
 		sink.AddFlagsToSet(flags)
 
 		flags.String("cursor_path", "/tmp/sink-state/", "Sink cursor's path")
+		flags.StringSlice("project", nil, "Project details: Google Cloud Project ID and PubSub topic name on which data will be published")
+		flags.StringP("endpoint", "e", "", "Substreams gRPC endpoint")
 
 	}),
 	Description(`
@@ -26,8 +28,6 @@ var sinkCmd = Command(sinkRunE,
 
 		The required arguments are:
 		- <endpoint>: The Substreams endpoint to reach (e.g. 'mainnet.eth.streamingfast.io:443').
-		- <projectId>: The Google Cloud project ID.
-		- <topicName>: The PubSub topic name on which data will be published.
 		- <moduleName>: The module name returning publish instructions in the substreams.
 		
 		The optional arguments are:
@@ -50,8 +50,15 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	app := shutter.New()
 	ctx := cmd.Context()
 
-	endpoint, projectID, topicName, module, manifestPath, blockRange := extractInjectArgs(cmd, args)
+	fmt.Printf("args: %v\n", args)
+	module, manifestPath, blockRange := extractInjectArgs(cmd, args)
+	endpoint := sflags.MustGetString(cmd, "endpoint")
 	cursorPath := sflags.MustGetString(cmd, "cursor_path")
+	project := sflags.MustGetStringSlice(cmd, "project")
+
+	fmt.Println("project: ", project)
+	projectID := project[0]
+	topicName := project[1]
 
 	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
@@ -89,18 +96,16 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func extractInjectArgs(_ *cobra.Command, args []string) (endpoint, projectId, topicName, moduleName, manifestPath, blockRange string) {
-	endpoint = args[0]
-	projectId = args[1]
-	topicName = args[2]
-	moduleName = args[3]
+func extractInjectArgs(_ *cobra.Command, args []string) (moduleName, manifestPath, blockRange string) {
+	fmt.Println(args)
+	moduleName = args[0]
 
-	if len(args) >= 5 {
-		manifestPath = args[4]
+	if len(args) >= 2 {
+		manifestPath = args[1]
 	}
 
-	if len(args) == 6 {
-		blockRange = args[5]
+	if len(args) == 3 {
+		blockRange = args[2]
 	}
 	return
 }
