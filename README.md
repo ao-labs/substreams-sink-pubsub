@@ -17,7 +17,7 @@ Before sinking any data to a PubSub, make sure to have the following prerequisit
       cd examples/pubsub_substream
       cargo build --target wasm32-unknown-unknown --release
       ```
-    **Note:** *If you are creating your own substreams, make sure to create a `map` module with an output type of `sf.substreams.sink.pubsub.v1.Publish`*
+    **Note:** *If you are creating your own substreams, make sure to create a `map` module with an output type of `sf.substreams.sink.pubsub.v1.Publish` message https://github.com/streamingfast/substreams-sink-pubsub/blob/develop/proto/sf/substreams/sink/pubsub/v1/pubsub.proto*
 
 ## Installation
 
