@@ -1,6 +1,6 @@
-# Substreams-sink-pubsub
+# Substreams sink to Google PubSub
 
-Substreams sink for PubSub helps quickly and easily sync blockchain data using Substreams modules to a PubSub topic.
+Substreams sink for Google PubSub helps quickly and easily sync blockchain data using Substreams modules to a PubSub topic.
 
 ## Prerequisites
 
