@@ -5,8 +5,8 @@ package:
 
 protobuf:
   files:
-    - substreams/sink/pubsub/v1/pubsub.proto
-    - substreams/sink/pubsub/v1/service.proto
+    - sf/substreams/sink/pubsub/v1/pubsub.proto
+    - sf/substreams/sink/pubsub/v1/service.proto
   importPaths:
     - ../../proto/
 
