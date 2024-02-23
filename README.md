@@ -1,4 +1,4 @@
-# substreams-sink-pubsub
+# Substreams-sink-pubsub
 
 Substreams sink for PubSub helps quickly and easily sync blockchain data using Substreams modules to a PubSub topic.
 This repository gives all the keys to run a substreams sink for PubSub that provides high-level data on blocks, for any blockchain supported by StreamingFast.  
@@ -7,21 +7,18 @@ This repository gives all the keys to run a substreams sink for PubSub that prov
 
 Before sinking any data to a PubSub, make sure to have the following prerequisites:
 
-## PubSub creation
+- **PubSub Creation**:
+  Create a PubSub with a Google cloud projectID associated and a topic on which to publish the data.
 
-Create a PubSub with a Google cloud projectID associated and a topic on which to publish the data.
+- **Substreams creation**:
+  - Use the `pubsub_substream` provided in the [examples](./examples) directory or create your own substreams.
+  - Compile the `pubsub_substream` project (or your own substreams):
 
-## Substreams creation
-
-- Use the `pubsub_substream` provided in the [examples](./examples) directory or create your own substreams.
-- Compile the `pubsub_substream` project (or your own substreams):
-
-    ```bash
-    cd examples/pubsub_substream
-    cargo build --target wasm32-unknown-unknown --release
-    ```
-
-**Note:** *If you are creating your own substreams, make sure to create a `map` module with an output type of `sf.substreams.sink.pubsub.v1.Publish`*
+      ```bash
+      cd examples/pubsub_substream
+      cargo build --target wasm32-unknown-unknown --release
+      ```
+    **Note:** *If you are creating your own substreams, make sure to create a `map` module with an output type of `sf.substreams.sink.pubsub.v1.Publish`*
 
 ## Installation
 
@@ -49,7 +46,7 @@ substreams-sink-pubsub sink <endpoint> <projectId> <topicName> <substreams_modul
 
 As an example, let's sink the ethereum blockchain data from the `pubsub_substream` module's named `map_clocks`, provided in the [examples](./examples) directory.
 
-Run the following command, to publish the data on the PubSub topic `myTopic` associated with the Google cloud `projectId` `myProjectId`:
+Run the following command, to publish the data on the PubSub topic `myTopic` associated with the Google cloud project-id `myProjectId`:
 
 ```bash
 substreams-sink-pubsub sink mainnet.eth.streamingfast.io:443 myProjectId myTopic map_clocks ./examples/pubsub_substream/manifest.yaml
