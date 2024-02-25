@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/streamingfast/bstream"
 	sink "github.com/streamingfast/substreams-sink"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/substreams/sink/pubsub/v1"
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/sf/substreams/sink/pubsub/v1"
 	"sort"
 	"sync"
 	"testing"
@@ -63,15 +63,6 @@ type resultMessage struct {
 
 func TestPublishMessages(t *testing.T) {
 	ctx := context.Background()
-	// Start a fake server running locally.
-	srv := pstest.NewServer()
-	defer srv.Close()
-
-	// Connect to the server without using TLS.
-	conn, err := grpc.Dial(srv.Addr, grpc.WithInsecure())
-	require.NoError(t, err)
-
-	defer conn.Close()
 
 	cases := []struct {
 		name            string
@@ -178,6 +169,15 @@ func TestPublishMessages(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			// Start a fake server running locally.
+			srv := pstest.NewServer()
+			defer srv.Close()
+
+			// Connect to the server without using TLS.
+			conn, err := grpc.Dial(srv.Addr, grpc.WithInsecure())
+			require.NoError(t, err)
+
+			defer conn.Close()
 			client, err := pubsub.NewClient(ctx, "project", option.WithGRPCConn(conn))
 			defer client.Close()
 
@@ -185,6 +185,7 @@ func TestPublishMessages(t *testing.T) {
 			if err != nil {
 				require.NoError(t, err)
 			}
+
 			topic.EnableMessageOrdering = true
 
 			testSink := &Sink{
