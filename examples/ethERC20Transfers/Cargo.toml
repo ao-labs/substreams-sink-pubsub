@@ -1,5 +1,5 @@
 [package]
-name = "ERC20_transfer"
+name = "ethERC20Transfers"
 version = "0.0.1"
 edition = "2021"
 

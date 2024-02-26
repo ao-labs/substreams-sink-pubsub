@@ -1,6 +1,6 @@
 specVersion: v0.1.0
 package:
-  name: ERC20_transfer
+  name: ethERC20Transfers
   version: v0.1.0
 
 protobuf:

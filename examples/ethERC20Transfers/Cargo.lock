@@ -3,20 +3,6 @@
 version = 3
 
 [[package]]
-name = "ERC20_transfer"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "getrandom",
- "prost",
- "prost-types",
- "regex",
- "serde",
- "serde_json",
- "substreams",
-]
-
-[[package]]
 name = "aho-corasick"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -92,6 +78,20 @@ checksum = "ac3e13f66a2f95e32a39eaa81f6b95d42878ca0e1db0c7543723dfe12557e860"
 dependencies = [
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "ethERC20Transfers"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "getrandom",
+ "prost",
+ "prost-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "substreams",
 ]
 
 [[package]]
