@@ -52,7 +52,6 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	cursorPath := sflags.MustGetString(cmd, "cursor_path")
 	project := sflags.MustGetStringSlice(cmd, "project")
 
-	fmt.Printf("Endpoint", endpoint)
 	projectID := project[0]
 	topicName := project[1]
 
