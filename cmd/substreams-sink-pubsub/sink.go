@@ -13,21 +13,19 @@ import (
 )
 
 var sinkCmd = Command(sinkRunE,
-	"sink <endpoint> <moduleName> [<manifest-path>] [<block-range>]",
+	"sink <moduleName> [<manifest-path>] [<block-range>]",
 	"Substreams Pubsub sinking",
 	Flags(func(flags *pflag.FlagSet) {
 		sink.AddFlagsToSet(flags)
 
 		flags.String("cursor_path", "/tmp/sink-state/", "Sink cursor's path")
 		flags.StringSlice("project", nil, "Project details: Google Cloud Project ID and PubSub topic name on which data will be published")
-		flags.StringP("endpoint", "e", "", "Substreams gRPC endpoint")
-
+		flags.StringP("endpoint", "e", "", "Substreams gRPC endpoint (e.g. 'mainnet.eth.streamingfast.io:443')")
 	}),
 	Description(`
 		Publishs block data on a google PubSub from a Substreams output. 
 
 		The required arguments are:
-		- <endpoint>: The Substreams endpoint to reach (e.g. 'mainnet.eth.streamingfast.io:443').
 		- <moduleName>: The module name returning publish instructions in the substreams.
 		
 		The optional arguments are:
@@ -39,10 +37,9 @@ var sinkCmd = Command(sinkRunE,
 	`),
 	ExamplePrefixed("substreams-sink-pubsub sink", `
 		# Publish block data messages produced by map_clocks for the whole chain
-		mainnet.eth.streamingfast.io:443 1 topic map_clocks ./examples/pubsub_substream/substreams.yaml
-
+		-e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml --project "1","topic"
 		# Publish block data messages produced by map_clocks for a specific range of blocks
-		mainnet.eth.streamingfast.io:443 1 topic map_clocks ./examples/pubsub_substream/substreams.yaml 0:100000
+		-e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml 0:100000 --project "1","topic" 
 	`),
 )
 
@@ -55,6 +52,7 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	cursorPath := sflags.MustGetString(cmd, "cursor_path")
 	project := sflags.MustGetStringSlice(cmd, "project")
 
+	fmt.Printf("Endpoint", endpoint)
 	projectID := project[0]
 	topicName := project[1]
 
