@@ -29,14 +29,14 @@ go install ./cmd/substreams-sink-pubsub
 
 ## Running 
 
-The `substreams-sink-pubsub` binary offers a sink tool. This sink tool sinks the data from the substreams to the PubSub associated with your Google cloud `projectId`. 
-This is publishing all the block relative data depending on the substreams module you are using, on a specified `topiName`. 
+The `substreams-sink-pubsub` binary offers a sink tool. This sink tool sinks the data from the substreams to the PubSub associated with your Google cloud `project_id`. 
+This is publishing all the block relative data depending on the substreams module you are using, on a specified `topi_name`. 
 
 Run the sink providing the `substreams manifest` and the substreams `module name` (the one having the `map` module with an output type of sf.substreams.sink.pubsub.v1.Publish),
 using the following command:
 
 ```bash 
-substreams-sink-pubsub sink -e <endpoint> --project <projectId> <substreams_manifest> <substreams_module_name> <topicName> 
+substreams-sink-pubsub sink -e <endpoint> --project <project_id> <substreams_manifest> <substreams_module_name> <topic_name> 
 ```
 
 **Note:** *--help flag can be used to get more information on the flags used in the sink command.*

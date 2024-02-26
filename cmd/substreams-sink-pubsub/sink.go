@@ -27,8 +27,8 @@ var sinkCmd = Command(sinkRunE,
 
 		The required arguments are:
 		- <manifest-path>: URL or local path to a '.yaml' file (e.g. './examples/simple/substreams.yaml').
-		- <moduleName>: The module name returning publish instructions in the substreams.
-		- <topicName>: The PubSub topic name to publish the messages to.
+		- <module-name>: The module name returning publish instructions in the substreams.
+		- <topic-name>: The PubSub topic name to publish the messages to.
 		
 		The optional arguments are:
 		- <start>:<stop>: The range of block to sync, if not provided, will sync from the module's initial block and then forever.
