@@ -320,18 +320,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pubsub_substream"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "getrandom",
- "prost",
- "prost-types",
- "regex",
- "substreams",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -389,6 +377,18 @@ dependencies = [
  "libc",
  "linux-raw-sys",
  "windows-sys",
+]
+
+[[package]]
+name = "simple"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "getrandom",
+ "prost",
+ "prost-types",
+ "regex",
+ "substreams",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 specVersion: v0.1.0
 package:
-  name: pubsub_substream
+  name: simple
   version: v0.1.0
 
 protobuf:

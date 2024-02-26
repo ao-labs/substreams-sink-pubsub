@@ -1,5 +1,5 @@
 [package]
-name = "pubsub_substream"
+name = "simple"
 version = "0.0.1"
 edition = "2021"
 

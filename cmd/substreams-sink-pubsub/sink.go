@@ -26,7 +26,7 @@ var sinkCmd = Command(sinkRunE,
 		Publishs block data on a google PubSub from a Substreams output. 
 
 		The required arguments are:
-		- <manifest-path>: URL or local path to a '.yaml' file (e.g. './examples/pubsub_substream/substreams.yaml').
+		- <manifest-path>: URL or local path to a '.yaml' file (e.g. './examples/simple/substreams.yaml').
 		- <moduleName>: The module name returning publish instructions in the substreams.
 		- <topicName>: The PubSub topic name to publish the messages to.
 		

@@ -1,6 +1,6 @@
 use substreams::pb::sf::substreams::v1::Clock;
 
-use pb::pubsub::v1::{Attribute, Message, Publish};
+use pb::sf::substreams::sink::pubsub::v1::{Attribute, Message, Publish};
 
 mod pb;
 
