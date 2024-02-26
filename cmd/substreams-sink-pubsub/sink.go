@@ -13,33 +13,33 @@ import (
 )
 
 var sinkCmd = Command(sinkRunE,
-	"sink <moduleName> [<manifest-path>] [<block-range>]",
+	"sink <manifest-path> <module-name> <topic-name> [<block-range>]",
 	"Substreams Pubsub sinking",
 	Flags(func(flags *pflag.FlagSet) {
 		sink.AddFlagsToSet(flags)
 
 		flags.String("cursor_path", "/tmp/sink-state/", "Sink cursor's path")
-		flags.StringSlice("project", nil, "Project details: Google Cloud Project ID and PubSub topic name on which data will be published")
+		flags.String("project", "", "Google Cloud Project ID")
 		flags.StringP("endpoint", "e", "", "Substreams gRPC endpoint (e.g. 'mainnet.eth.streamingfast.io:443')")
 	}),
 	Description(`
 		Publishs block data on a google PubSub from a Substreams output. 
 
 		The required arguments are:
+		- <manifest-path>: URL or local path to a '.yaml' file (e.g. './examples/pubsub_substream/substreams.yaml').
 		- <moduleName>: The module name returning publish instructions in the substreams.
+		- <topicName>: The PubSub topic name to publish the messages to.
 		
 		The optional arguments are:
-		- <manifest>: URL or local path to a '.yaml' file (e.g. './examples/pubsub_substream/substreams.yaml').
 		- <start>:<stop>: The range of block to sync, if not provided, will sync from the module's initial block and then forever.
 
-		If the <manifest> is not provided, assume '.' contains a Substreams project to run. If
-		<start>:<stop> is not provided, assumes the whole chain.
+		If <start>:<stop> is not provided, assumes the whole chain.
 	`),
 	ExamplePrefixed("substreams-sink-pubsub sink", `
 		# Publish block data messages produced by map_clocks for the whole chain
-		-e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml --project "1","topic"
+		-e mainnet.eth.streamingfast.io:443 ./examples/simple/substreams.yaml map_clocks "topic" --project "1"
 		# Publish block data messages produced by map_clocks for a specific range of blocks
-		-e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml 0:100000 --project "1","topic" 
+		-e mainnet.eth.streamingfast.io:443 ./examples/simple/substreams.yaml map_clocks "topic" 0:1000 --project "1"
 	`),
 )
 
@@ -47,13 +47,10 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	app := shutter.New()
 	ctx := cmd.Context()
 
-	module, manifestPath, blockRange := extractInjectArgs(cmd, args)
+	manifestPath, module, topicName, blockRange := extractInjectArgs(cmd, args)
 	endpoint := sflags.MustGetString(cmd, "endpoint")
 	cursorPath := sflags.MustGetString(cmd, "cursor_path")
-	project := sflags.MustGetStringSlice(cmd, "project")
-
-	projectID := project[0]
-	topicName := project[1]
+	projectID := sflags.MustGetString(cmd, "project")
 
 	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
@@ -91,16 +88,16 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func extractInjectArgs(_ *cobra.Command, args []string) (moduleName, manifestPath, blockRange string) {
-	fmt.Println(args)
-	moduleName = args[0]
+func extractInjectArgs(_ *cobra.Command, args []string) (manifestPath, moduleName, topicName, blockRange string) {
+	manifestPath = args[0]
+	moduleName = args[1]
 
-	if len(args) >= 2 {
-		manifestPath = args[1]
+	if len(args) >= 3 {
+		topicName = args[2]
 	}
 
-	if len(args) == 3 {
-		blockRange = args[2]
+	if len(args) == 4 {
+		blockRange = args[3]
 	}
 	return
 }

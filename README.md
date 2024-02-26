@@ -10,11 +10,11 @@ Before sinking any data to a PubSub, make sure to have the following prerequisit
   Create a PubSub with a Google cloud projectID associated and a topic on which to publish the data.
 
 - **Substreams creation**:
-  - Use the `pubsub_substream` provided in the [examples](./examples) directory or create your own substreams.
-  - Compile the `pubsub_substream` project (or your own substreams):
+  - Use the `simple` provided in the [examples](./examples) directory or create your own substreams.
+  - Compile the `simple` project (or your own substreams):
 
       ```bash
-      cd examples/pubsub_substream
+      cd examples/simple
       cargo build --target wasm32-unknown-unknown --release
       ```
     **Note:** *If you are creating your own substreams, make sure to create a `map` module with an output type of `sf.substreams.sink.pubsub.v1.Publish` message https://github.com/streamingfast/substreams-sink-pubsub/blob/develop/proto/sf/substreams/sink/pubsub/v1/pubsub.proto*
@@ -36,19 +36,19 @@ Run the sink providing the `substreams manifest` and the substreams `module name
 using the following command:
 
 ```bash 
-substreams-sink-pubsub sink -e <endpoint> <substreams_module_name> <substreams_manifest> --project <projectId>,<topicName> 
+substreams-sink-pubsub sink -e <endpoint> --project <projectId> <substreams_manifest> <substreams_module_name> <topicName> 
 ```
 
 **Note:** *--help flag can be used to get more information on the flags used in the sink command.*
 
 ## Example
 
-As an example, let's sink the ethereum blockchain data from the `pubsub_substream` module's named `map_clocks`, provided in the [examples](./examples) directory.
+As an example, let's sink the ethereum blockchain data from the `simple` module's named `map_clocks`, provided in the [examples](./examples) directory.
 
 Run the following command, to publish the data on the PubSub topic `myTopic` associated with the Google cloud project-id `myProjectId`:
 
 ```bash
-substreams-sink-pubsub sink -e mainnet.eth.streamingfast.io:443 map_clocks ./examples/pubsub_substream/substreams.yaml --project "1","topic"
+substreams-sink-pubsub sink -e mainnet.eth.streamingfast.io:443 --project "1" ./examples/simple/substreams.yaml map_clocks "topic"
 ```
 
 
