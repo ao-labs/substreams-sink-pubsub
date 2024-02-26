@@ -1,0 +1,31 @@
+[package]
+name = "ERC20_transfer"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+name = "substreams"
+crate-type = ["cdylib"]
+
+[dependencies]
+prost = "0.11"
+prost-types = "0.11"
+substreams = "0.5.13"
+serde_json = "1.0.114"
+serde = { version = "1.0.197", features = ["derive"] }
+
+[patch.crates-io]
+substreams = { path = "../../../substreams-rs/substreams" }
+
+# Required so that ethabi > ethereum-types build correctly under wasm32-unknown-unknown
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { version = "0.2", features = ["custom"] }
+
+[build-dependencies]
+anyhow = "1"
+regex = "1.8"
+
+[profile.release]
+lto = true
+opt-level = 's'
+strip = "debuginfo"

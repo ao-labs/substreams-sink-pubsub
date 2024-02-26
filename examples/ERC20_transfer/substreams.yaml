@@ -1,0 +1,31 @@
+specVersion: v0.1.0
+package:
+  name: ERC20_transfer
+  version: v0.1.0
+
+protobuf:
+  files:
+    - sf/substreams/sink/pubsub/v1/pubsub.proto
+  importPaths:
+    - ../../proto/
+
+imports :
+  eth_transfer: https://spkg.io/streamingfast/substreams-eth-token-transfers-v0.4.0.spkg
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/substreams.wasm
+
+
+modules:
+  - name: map_eth_transfers
+    kind: map
+    initialBlock: 0
+    inputs:
+      - map: eth_transfer:map_transfers
+    output:
+      type: proto:sf.substreams.sink.pubsub.v1.Publish
+
+
+network: ethereum
