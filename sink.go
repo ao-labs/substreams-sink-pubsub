@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/streamingfast/shutter"
@@ -41,11 +40,6 @@ func NewSink(sinker *sink.Sinker, logger *zap.Logger, cursorPath string, client 
 		topic:      topic,
 	}
 
-	s.OnTerminating(func(err error) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		s.onTerminating(ctx, err)
-	})
 	return s
 }
 
@@ -63,10 +57,6 @@ func (s *Sink) Run(ctx context.Context) {
 
 	s.logger.Info("starting PubSub sink", zap.Stringer("restarting_at", cursor.Block()))
 	s.Sinker.Run(ctx, cursor, sink.NewSinkerHandlers(s.handleBlockScopedData, s.handleBlockUndoSignal))
-}
-
-func (s *Sink) onTerminating(ctx context.Context, err error) {
-	s.logger.Error("terminating", zap.Error(err))
 }
 
 func (s *Sink) handleBlockScopedData(ctx context.Context, data *pbsubstreamsrpc.BlockScopedData, isLive *bool, cursor *sink.Cursor) error {
@@ -215,7 +205,3 @@ func generateUndoBlockMessages(lastValidBlockNum uint64, cursor *sink.Cursor) []
 
 	return messages
 }
-
-//TODO: Configure retry
-
-//TODO: Activate compression when publishing

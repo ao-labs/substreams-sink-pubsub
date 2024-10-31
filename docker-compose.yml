@@ -1,0 +1,37 @@
+services:
+  pubsub:
+    container_name: pubsub-ssps
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    restart: always
+    ports:
+      - "8888:8888"
+    command:
+      [
+        "gcloud",
+        "beta",
+        "emulators",
+        "pubsub",
+        "start",
+        "--project=freightstream-local",
+        "--host-port=0.0.0.0:8888",
+      ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  pubsub-bootstrap:
+    container_name: pubsub-boot-ssps
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    restart: on-failure
+    volumes:
+      - ./devel/:/etc/devel/
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub:8888
+    command:
+      [
+        "bash",
+        "/etc/devel/bootstrap-pubsub-emulator.sh",
+      ]
+    depends_on:
+      - pubsub
