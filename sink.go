@@ -8,11 +8,13 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/hashicorp/go-multierror"
 	"github.com/streamingfast/shutter"
 	sink "github.com/streamingfast/substreams-sink"
-	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/sf/substreams/sink/pubsub/v1"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 	"go.uber.org/zap"
+
+	pbpubsub "github.com/streamingfast/substreams-sink-pubsub/pb/sf/substreams/sink/pubsub/v1"
 )
 
 type Sink struct {
@@ -93,12 +95,11 @@ func generateBlockScopedMessages(publish *pbpubsub.Publish, cursor *sink.Cursor,
 			attributes[attribute.Key] = attribute.Value
 		}
 
-		attributes["Cursor"] = cursor.String()
+		attributes["cursor"] = cursor.String()
 
 		msg := &pubsub.Message{
-			Data:        message.Data,
-			Attributes:  attributes,
-			OrderingKey: fmt.Sprintf("%09d_%05d", blockNum, indexCounter),
+			Data:       message.Data,
+			Attributes: attributes,
 		}
 
 		messages = append(messages, msg)
@@ -175,19 +176,20 @@ func (s *Sink) publishMessages(ctx context.Context, messages []*pubsub.Message) 
 		results = append(results, result)
 	}
 
-	var resultErrors []error
-
+	meg := multierror.Group{}
 	for _, res := range results {
-		_, err := res.Get(ctx)
-		if err != nil {
-			resultErrors = append(resultErrors, err)
-		}
+		res := res
+		meg.Go(func() error {
+			_, err := res.Get(ctx)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 	}
-
-	if len(resultErrors) != 0 {
-		return fmt.Errorf("handling result error: %w", resultErrors[len(resultErrors)-1])
+	if err := meg.Wait(); err != nil {
+		return fmt.Errorf("handling result error: %w", err)
 	}
-
 	return nil
 }
 func generateUndoBlockMessages(lastValidBlockNum uint64, cursor *sink.Cursor) []*pubsub.Message {

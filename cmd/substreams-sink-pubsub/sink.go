@@ -10,8 +10,9 @@ import (
 	"github.com/streamingfast/cli/sflags"
 	"github.com/streamingfast/shutter"
 	sink "github.com/streamingfast/substreams-sink"
-	spubsub "github.com/streamingfast/substreams-sink-pubsub"
 	"github.com/streamingfast/substreams/manifest"
+
+	spubsub "github.com/streamingfast/substreams-sink-pubsub"
 )
 
 var sinkCmd = Command(sinkRunE,
@@ -68,7 +69,6 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	topic := client.Topic(topicName)
-	topic.EnableMessageOrdering = true
 
 	// FIXME: This is now duplicated across sinkers (this one and Substreams Sink SQL). It should have
 	// definitely be added in sink.NewFromViper directly so that it's shared across all sinkers.
