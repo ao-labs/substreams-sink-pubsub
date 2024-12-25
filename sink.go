@@ -95,7 +95,7 @@ func generateBlockScopedMessages(publish *pbpubsub.Publish, cursor *sink.Cursor,
 			attributes[attribute.Key] = attribute.Value
 		}
 
-		attributes["cursor"] = cursor.String()
+		attributes["Cursor"] = cursor.String()
 
 		msg := &pubsub.Message{
 			Data:       message.Data,
